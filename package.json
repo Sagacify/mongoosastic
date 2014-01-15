@@ -15,6 +15,7 @@
    },
    "main":"lib/mongoosastic.js",
    "dependencies":{
+      "elastical": "latest",
       "elasticsearch":"latest"
    },
    "peerDependencies":{
