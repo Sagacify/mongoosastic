@@ -1,30 +1,35 @@
 {
-  "author": "James R. Carr <james.r.carr@gmail.com> (http://blog.james-carr.org)",
-  "name": "mongoosastic",
-  "description": "A mongoose plugin that indexes models into elastic search",
-  "version": "0.2.6",
-  "tags":["mongodb", "elastic search", "mongoose", "full text search"],
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/jamescarr/mongoosastic"
-  },
-  "main":"lib/mongoosastic.js",
-  "dependencies": {
-    "elastical":"0.0.12"
-  },
-  "peerDependencies": {
-    "mongoose":"3.8.x"
-  },
-  "devDependencies": {
-      "mocha":"*"
-    , "should":"*"
-    , "async":"*"
-    , "mongoose":"3.8.x"
-  },
-  "engines": {
-    "node": ">= 0.8.0"
-  },
-  "scripts":{
-    "test":"mocha -R spec -t 20000 -b"
-  }
+   "author":"James R. Carr <james.r.carr@gmail.com> (http://blog.james-carr.org)",
+   "name":"mongoosastic",
+   "description":"A mongoose plugin that indexes models into elastic search",
+   "version":"0.2.6",
+   "tags":[
+      "mongodb",
+      "elastic search",
+      "mongoose",
+      "full text search"
+   ],
+   "repository":{
+      "type":"git",
+      "url":"git://github.com/jamescarr/mongoosastic"
+   },
+   "main":"lib/mongoosastic.js",
+   "dependencies":{
+      "elasticsearch":"latest"
+   },
+   "peerDependencies":{
+      "mongoose":"3.8.x"
+   },
+   "devDependencies":{
+      "mocha":"*",
+      "should":"*",
+      "async":"*",
+      "mongoose":"3.8.x"
+   },
+   "engines":{
+      "node":">= 0.8.0"
+   },
+   "scripts":{
+      "test":"mocha -R spec -t 20000 -b"
+   }
 }
