@@ -10,6 +10,7 @@ function SagaSearch (schema, options) {
 	var esClient = new elasticsearch.Client({
 			hosts: options.hosts
 		})
+	  , mapping = SchemaTreeMapper(schema)
 	  , hydrateOptions = otpions.hydrateOptions
 	  , alwaysHydrate = !!options.alwaysHydrate
 	  , indexName = options.indexName
@@ -32,7 +33,7 @@ function SagaSearch (schema, options) {
 			index: index || indexName,
 			type: type || typeName,
 			id: '' + model._id,
-			body: serialized(model)
+			body: Serializer(mapping, model)
 		}, function (error, res) {
 			emitEvent(model, 'es-indexed', arguments);
 		});
@@ -50,7 +51,7 @@ function SagaSearch (schema, options) {
 		});
 	};
 
-	schema.statics.synchronize = function (indexName, typeName, query) {
+	schema.statics.synchronize = function (query) {
 		var model   = this
 		  , readyToClose = false;
 		  , emitter = new events.EventEmitter();
@@ -93,9 +94,10 @@ function SagaSearch (schema, options) {
 		return emitter;
 	};
 
-	schema.statics.search = function (query, options, cb) {
+	schema.statics.search = function (query, index, type, options, cb) {
 		var model = this;
-		// TODO  -- query.index = indexName -- TODO
+		query.index = index || indexName;
+		query.type = type || typeName;
 		esClient.search(query, function (error, res) {
 			if(error) {
 				cb(error);

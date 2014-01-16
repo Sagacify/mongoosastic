@@ -69,7 +69,7 @@ function inspectTree (tree) {
 			skelleton[i] = branch;
 		}
 	}
-	return skelleton;
+	return skelleton; // TODO : add { properties: skelleton } ???
 }
 
 module.exports = inspectTree;
