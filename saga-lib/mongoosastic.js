@@ -70,7 +70,7 @@ function elasticSearchPlugin (schema, options) {
 				if(readyToClose && !counter) {
 					close();
 				}
-			})
+			});
 		}
 
 		setIndexNameIfUnset(model.modelName);
