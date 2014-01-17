@@ -3,8 +3,7 @@ global.models = mongoose.models
 global.model = mongoose.model.bind(mongoose);
 
 var SchemaTreeMapper = require('./SchemaTreeMapper');
-
-console.log(Object.keys(SchemaTreeMapper));
+var Serializer = require('./Serializer');
 
 var RuleSchema = new mongoose.Schema({
 	weekday: {
@@ -214,11 +213,122 @@ mongoose.connect('mongodb://localhost:27017/testy', function (e) {
 
 		console.log('\n\n\n');
 
-		//console.log(Object.keys(mongoose));
-		console.log(mongoose.models);
-		//console.log(Object.keys(mongoose.models));
-		console.log(mongoose.modelSchemas);
-		//console.log(Object.keys(mongoose.modelSchemas));
+		var location = model('Location')({
+			"onCall" : true,
+			"latLng" : [
+				50.8130511,
+				4.390021899999965
+			],
+			"_id" : "52d3d9a6b7fa3b0d0600000d",
+			"_deleted" : false,
+			"rules" : [
+				{
+					"duration" : "01:00",
+					"end" : "23:59",
+					"from" : "00:00",
+					"weekday" : 0,
+					"_id" : "52d3d9a6b7fa3b0d0600000e",
+					"brk" : {
+						"from" : "12:00",
+						"end" : "13:00"
+					}
+				},
+				{
+					"duration" : "01:00",
+					"end" : "23:59",
+					"from" : "00:00",
+					"weekday" : 6,
+					"_id" : "52d3d9a6b7fa3b0d0600000f",
+					"brk" : {
+						"from" : "12:00",
+						"end" : "13:00"
+					}
+				},
+				{
+					"duration" : "01:00",
+					"end" : "23:59",
+					"from" : "19:30",
+					"weekday" : 5,
+					"_id" : "52d3d9a6b7fa3b0d06000010",
+					"brk" : {
+						"from" : "20:30",
+						"end" : "21:30"
+					}
+				},
+				{
+					"duration" : "01:00",
+					"end" : "23:59",
+					"from" : "19:30",
+					"weekday" : 4,
+					"_id" : "52d3d9a6b7fa3b0d06000011",
+					"brk" : {
+						"from" : "20:30",
+						"end" : "21:30"
+					}
+				},
+				{
+					"duration" : "01:00",
+					"end" : "23:59",
+					"from" : "19:30",
+					"weekday" : 3,
+					"_id" : "52d3d9a6b7fa3b0d06000012",
+					"brk" : {
+						"from" : "20:30",
+						"end" : "21:30"
+					}
+				},
+				{
+					"duration" : "01:00",
+					"end" : "23:59",
+					"from" : "19:30",
+					"weekday" : 2,
+					"_id" : "52d3d9a6b7fa3b0d06000013",
+					"brk" : {
+						"from" : "20:30",
+						"end" : "21:30"
+					}
+				},
+				{
+					"duration" : "01:00",
+					"end" : "23:59",
+					"from" : "19:30",
+					"weekday" : 1,
+					"_id" : "52d3d9a6b7fa3b0d06000014",
+					"brk" : {
+						"from" : "20:30",
+						"end" : "21:30"
+					}
+				}
+			],
+			"tz" : -60,
+			"address" : {
+				"name" : "Home Sweet Home",
+				"verbose" : "15,Av. Pierre Curie,Ixelles",
+				"street_number" : "15",
+				"route" : "Av. Pierre Curie",
+				"locality" : "Ixelles",
+				"administrative_area_level_1" : "Bruxelles",
+				"country" : "BE",
+				"postal_code" : "1050",
+				"phone" : "99999999999"
+			},
+			"professional" : {
+				"state" : 2,
+				"spec" : "International relations law",
+				"lastname" : "van der Beek",
+				"firstname" : "Mickael",
+				"_id" : "52d3d9a6b7fa3b0d06000004"
+			},
+			"__v" : 0,
+			"USELESSFIELD": "BLAH",
+			"MOREUSELESSFIELDS": [1, 2, 3],
+			"USELESSOBJ": {
+				"NOTUSED": 1,
+				"NOTUSEDAGAIN": 2
+			}
+		});
+		var serialized = Serializer(skelleton, location);
+		console.log(serialized);
 	}
 });
 

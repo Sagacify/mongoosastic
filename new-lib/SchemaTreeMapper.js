@@ -65,6 +65,12 @@ function inspectTree (tree) {
 			continue;
 		}
 		field = tree[i];
+		if(i === '_deleted') {
+			console.log('\nDeleted ->');
+			console.log(i)
+			console.log(field);
+			console.log(fields);
+		}
 		if((branch = handleField(field))) {
 			skelleton[i] = branch;
 		}

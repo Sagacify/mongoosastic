@@ -7,13 +7,13 @@ var SchemaTreeMapper = require('./SchemaTreeMapper')
 
 function SagaSearch (schema, options) {
 
-	var esClient = new elasticsearch.Client({
-			hosts: options.hosts
+	var esClient = new elasticSearch.Client({
+			host: options.host
 		})
-	  , mapping = SchemaTreeMapper(schema)
-	  , hydrateOptions = otpions.hydrateOptions
+	  , mapping = SchemaTreeMapper(schema.tree)
+	  , hydrateOptions = options.hydrateOptions
 	  , alwaysHydrate = !!options.alwaysHydrate
-	  , indexName = options.indexName
+	  , indexName = options.index
 	  , typeName = options.type;
 
 	function resolveCollectionName (modelname) {
@@ -25,7 +25,7 @@ function SagaSearch (schema, options) {
 		emitter.emit.apply(emitter, [eventName].concat(argsList));
 	}
 
-	function createMappingIfNotPresent () {} // TODO
+	// function createMappingIfNotPresent () {}  TODO
 
 	schema.methods.index = function (index, type) {
 		var model = this;
@@ -43,8 +43,8 @@ function SagaSearch (schema, options) {
 		var model = this;
 		resolveCollectionName(model.constructor.modelName);
 		esClient.delete({
-			index: index || indexName
-			type: typeName,
+			index: index || indexName,
+			type: type || typeName,
 			id: '' + model._id
 		}, function (error, res) {
 			emitEvent(model, 'es-removed', arguments);
@@ -53,10 +53,10 @@ function SagaSearch (schema, options) {
 
 	schema.statics.synchronize = function (query) {
 		var model   = this
-		  , readyToClose = false;
+		  , readyToClose = false
 		  , emitter = new events.EventEmitter();
 
-		if(!query || (typeof query !== 'object') {
+		if(!query || (typeof query !== 'object')) {
 			query = {};
 		}
 
@@ -68,7 +68,9 @@ function SagaSearch (schema, options) {
 		  }
 		  , forward = function (doc, counter) {
 			  	doc.on('es-indexed', function (error, res) {
-			  		doc.removeListener('es-indexed');
+			  		// TODO - Potential improvement is removing the listener
+			  		// To prevent memoery leaks and block the Garbage Collector
+			  		//doc.removeListener('es-indexed', function () {});
 			  		emitEvent(emitter, error ? 'error' : 'data', arguments);
 			  		if(counter != null) {
 			  			counter--;
@@ -110,6 +112,14 @@ function SagaSearch (schema, options) {
 			}
 		});
 	}
+
+	schema.post('remove', function (doc) {
+		this.unindex();
+	});
+
+	schema.post('save', function (doc) {
+		this.index();
+	});
 
 }
 

@@ -1,5 +1,5 @@
 function Hydrator (res, model, hydrateOptions) {
-	var modelName = model.modelName;
+	var modelName = model.modelName
 	  , hits
 	  , len;
 	if(res.hits && (len = res.hits.total) && (hits = res.hits.hits)) {
@@ -16,8 +16,8 @@ function Hydrator (res, model, hydrateOptions) {
 module.exports = Hydrator;
 
 function hydrateDocument (hit, modelName, hydrateOptions) {
-	var models = mongoose.models;
-	  , data = hit._source;
+	var models = mongoose.models
+	  , data = hit._source
 	  , model;
 	if((model = hydrateOptions[hit._type])) {
 		return new model(data);
