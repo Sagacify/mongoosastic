@@ -2,6 +2,7 @@ var elasticSearch = require('elasticsearch')
   , events        = require('events');
 
 var SchemaTreeMapper = require('./SchemaTreeMapper')
+  , MappingMerger = require('./MappingMerger')
   , Serializer = require('./Serializer')
   , Hydrator = require('./Hydrator');
 
@@ -10,11 +11,13 @@ function SagaSearch (schema, options) {
 	var esClient = new elasticSearch.Client({
 			host: options.host
 		})
-	  , mapping = SchemaTreeMapper(schema.tree)
+	  , schemaExtension = options.schemaExtension
 	  , hydrateOptions = options.hydrateOptions
 	  , alwaysHydrate = !!options.alwaysHydrate
+	  , mapping = SchemaTreeMapper(schema.tree)
 	  , indexName = options.index
 	  , typeName = options.type;
+
 
 	function resolveCollectionName (modelname) {
 		return mongoose.models[modelname] ? mongoose.models[modelname].collection.name : null;
@@ -25,7 +28,9 @@ function SagaSearch (schema, options) {
 		emitter.emit.apply(emitter, [eventName].concat(argsList));
 	}
 
-	// function createMappingIfNotPresent () {}  TODO
+	statics.methods.addMapping = function (addedMapping) {
+		return MappingMerger(mapping, addedMapping);
+	};
 
 	schema.methods.index = function (index, type) {
 		var model = this;
@@ -41,7 +46,6 @@ function SagaSearch (schema, options) {
 
 	schema.methods.unindex = function (index, type) {
 		var model = this;
-		resolveCollectionName(model.constructor.modelName);
 		esClient.delete({
 			index: index || indexName,
 			type: type || typeName,
@@ -68,9 +72,6 @@ function SagaSearch (schema, options) {
 		  }
 		  , forward = function (doc, counter) {
 			  	doc.on('es-indexed', function (error, res) {
-			  		// TODO - Potential improvement is removing the listener
-			  		// To prevent memoery leaks and block the Garbage Collector
-			  		//doc.removeListener('es-indexed', function () {});
 			  		emitEvent(emitter, error ? 'error' : 'data', arguments);
 			  		if(counter != null) {
 			  			counter--;

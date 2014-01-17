@@ -4,6 +4,7 @@ global.model = mongoose.model.bind(mongoose);
 
 var SchemaTreeMapper = require('./SchemaTreeMapper');
 var Serializer = require('./Serializer');
+var MappingMerger = require('./MappingMerger');
 
 var RuleSchema = new mongoose.Schema({
 	weekday: {
@@ -36,26 +37,26 @@ var RuleSchema = new mongoose.Schema({
 	duration: {
 		type: String,
 		public: true,
-		validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString'],
+		validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString']
 	},
 	/*Duration in hour*/
 	buf: {
 		type: String,
 		public: true,
-		validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString'],
+		validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString']
 	},
 	/*Duration in hour*/
 	brk: {
 		from: {
 			type: String,
 			public: true,
-			validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString'],
+			validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString']
 		},
 		end: {
 			type: String,
 			public: true,
-			validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString'],
-		},
+			validation: ['isOptional', 'String', { 'lenEqualTo': 5 }, 'timeString']
+		}
 	}
 	// current	: { type: Boolean, public: true } /* Wheter of not this rule is the current one*/
 });
@@ -76,12 +77,14 @@ var LocationSchema = new mongoose.Schema({
 		firstname: {
 			type: String,
 			validation: ['String', 'notEmpty', 'notNull', { 'lenInferiorTo': 65 }],
-			public: true
+			public: true,
+			'es-type': 'double'
 		},
 		lastname: {
 			type: String,
 			validation: ['String', 'notEmpty', 'notNull', { 'lenInferiorTo': 65 }],
-			public: true
+			public: true,
+			'es-ignore': true
 		},
 		profilePicture: {
 			type: String,
@@ -181,6 +184,9 @@ var LocationSchema = new mongoose.Schema({
 });
 
 mongoose.model('Location', LocationSchema);
+
+// console.log(LocationSchema.tree);
+// throw 'd';
 
 mongoose.connect('mongodb://localhost:27017/testy', function (e) {
 	if (e) {
@@ -327,8 +333,26 @@ mongoose.connect('mongodb://localhost:27017/testy', function (e) {
 				"NOTUSEDAGAIN": 2
 			}
 		});
-		var serialized = Serializer(skelleton, location);
-		console.log(serialized);
+
+		var extendedSkelleton = MappingMerger(skelleton, {
+			name: {
+				type: 'double'
+			},
+			other: {
+				type: 'string'
+			},
+			rules: {
+				properties: {
+					blahblaj: {
+						type: 'string'
+					}
+				}
+			}
+		})
+
+		//var serialized = Serializer(skelleton, location);
+		console.log(extendedSkelleton);
+
 	}
 });
 

@@ -4,16 +4,23 @@ function inspectField (field) {
 		type = field.type.name;
 	}
 	var parent = {};
-	if(field.geoindex) {
+	if(field['es-ignore']) {
+		type = false;
+	}
+	else if(field['es-type']) {
+		type = field['es-type'];
+	}
+	else if(field.geoindex) {
 		type = 'geo_point';
 		parent.location = {};
 	}
-	if(type === 'Number') {
+	else if(type === 'Number') {
 		type = 'Double';
 	}
-	if(type === 'ObjectId') {
+	else if(type === 'ObjectId') {
 		type = 'String';
 	}
+
 	var host = parent.location || parent;
 	if(type && (typeof type === 'string')) {
 		return (host.type = type.toLowerCase()) && parent;
