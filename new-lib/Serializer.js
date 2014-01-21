@@ -7,9 +7,19 @@ function handleArray (mapField, modField) {
 		  , ele
 		while(len--) {
 			ele = modField[len];
-			if((branch = inspectMap(mapField, ele)) !== undefined) {
+			// console.log("--> ELE")
+			// console.log(mapField)
+			// console.log(ele);
+			// console.log('--> inspectMap')
+			// console.log(handleField(mapField, ele))
+			if(ele && mapField && (branch = handleField(mapField, ele))){
+
 				arrayMap.push(branch);
 			}
+			// if((branch = inspectMap(mapField, ele)) !== undefined) {
+			// 	arrayMap.push(branch);
+			// }
+			
 		}
 		return arrayMap;
 	}
@@ -30,9 +40,20 @@ function handleField (mapField, modField) {
 	// 	return modField.toString() || undefined;
 	// }
 	else if(typeof mapField.type === 'string') {
+
 		var type = mapField.type === 'double' ? 'number' : mapField.type
-		  , constructor = type.charAt(0).toUpperCase() + type.slice(1);
-		return modField.constructor.name === constructor ? modField : undefined;
+		  , constructor = type.charAt(0).toUpperCase() + type.slice(1)
+		  , modFieldConstructor = modField.constructor.name;
+		if (modFieldConstructor == "ObjectID"){
+			modFieldConstructor = "String";
+		}
+		// console.log("Constructor")
+		// console.log(modField.constructor.name);
+		// console.log(constructor);
+		return modField ? (modFieldConstructor === constructor ? modField : undefined) : undefined;
+	}
+	else if(typeof mapField === 'object' && typeof modField === 'object'){
+		return inspectMap(mapField, modField);
 	}
 }
 
@@ -51,8 +72,8 @@ function inspectMap (map, model) {
 		}
 		mapField = map[i];
 		modField = model[i];
-		if(typeof mapField === 'object' && modField !== undefined) { // maybe remove modfield test
-			if((branch = handleField(mapField, modField)) !== undefined) {
+		if(typeof mapField === 'object' && modField != undefined) { // maybe remove modfield test
+			if((branch = handleField(mapField, modField)) != undefined) {
 				serialized[i] = branch;
 			}
 			else {

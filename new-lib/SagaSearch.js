@@ -24,23 +24,27 @@ function SagaSearch (schema, options) {
 	}
 
 	function emitEvent (emitter, eventName, args) {
-		var argsList = Array.prototype.slice.call(arguments, 0);
-		emitter.emit.apply(emitter, [eventName].concat(argsList));
+		//var argsList = Array.prototype.slice.call(arguments, 0);
+		emitter.emit(eventName, args);
+		//emitter.emit.apply(emitter, [eventName].concat(argsList));
 	}
 
-	statics.methods.addMapping = function (addedMapping) {
+	schema.methods.addMapping = function (addedMapping) {
 		return MappingMerger(mapping, addedMapping);
 	};
 
 	schema.methods.index = function (index, type) {
 		var model = this;
+		console.log("--> NEW MODEL INDEXING");
+		console.log(model);
 		esClient.index({
 			index: index || indexName,
-			type: type || typeName,
+			type: type || typeName || model.get('__t'),
 			id: '' + model._id,
-			body: Serializer(mapping, model)
+			body: /*Serializer(mapping, model)*/model
 		}, function (error, res) {
-			emitEvent(model, 'es-indexed', arguments);
+			model.emit('es-indexed', error, res);
+			//emitEvent(model, 'es-indexed', arguments);
 		});
 	};
 
@@ -48,14 +52,15 @@ function SagaSearch (schema, options) {
 		var model = this;
 		esClient.delete({
 			index: index || indexName,
-			type: type || typeName,
+			type: type || typeName || model.get('__t'),
 			id: '' + model._id
 		}, function (error, res) {
-			emitEvent(model, 'es-removed', arguments);
+			model.emit('es-removed', error, res);
+			//emitEvent(model, 'es-removed', arguments);
 		});
 	};
 
-	schema.statics.synchronize = function (query) {
+	schema.statics.sync = function (query) {
 		var model   = this
 		  , readyToClose = false
 		  , emitter = new events.EventEmitter();
@@ -72,7 +77,18 @@ function SagaSearch (schema, options) {
 		  }
 		  , forward = function (doc, counter) {
 			  	doc.on('es-indexed', function (error, res) {
-			  		emitEvent(emitter, error ? 'error' : 'data', arguments);
+			  		// QUESTION FOR MICKAEL : I don't understand why the argument of this listener are different that the ones of the emmiter?? Also, I dont
+			  		// understand what the next emmiter does.  Thanks
+			  		// console.log("INDEXED ?");
+			  		// console.log("ERROR :"+ error)
+			  		// console.log("RES:" +res);
+			  		if(error) {
+						emitter.emit('error', error);
+					}
+					else {
+						emitter.emit('data', null, doc);
+					}
+			  		//emitEvent(emitter, error ? 'error' : 'data', arguments);
 			  		if(counter != null) {
 			  			counter--;
 			  			close();
@@ -83,6 +99,9 @@ function SagaSearch (schema, options) {
 		model.find(query).stream()
 		.on('data', function (doc) {
 			counter++;
+			if(doc.esWillIndex){
+				doc.esWillIndex();
+			}
 			forward(doc, counter);
 			doc.index();
 		})
@@ -115,11 +134,14 @@ function SagaSearch (schema, options) {
 	}
 
 	schema.post('remove', function (doc) {
-		this.unindex();
+		doc.unindex();
 	});
 
 	schema.post('save', function (doc) {
-		this.index();
+		if(doc.esWillIndex){
+			doc.esWillIndex();
+		}
+		doc.index();
 	});
 
 }
