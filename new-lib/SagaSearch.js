@@ -35,8 +35,6 @@ function SagaSearch (schema, options) {
 
 	schema.methods.index = function (index, type) {
 		var model = this;
-		console.log("--> NEW MODEL INDEXING");
-		console.log(model);
 		esClient.index({
 			index: index || indexName,
 			type: type || typeName || model.get('__t'),
