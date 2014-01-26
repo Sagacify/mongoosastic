@@ -1,5 +1,6 @@
 var elasticSearch = require('elasticsearch')
-  , events        = require('events');
+  , events        = require('events')
+  , async		  = require('async');
 
 var SchemaTreeMapper = require('./SchemaTreeMapper')
   , MappingMerger = require('./MappingMerger')
@@ -9,14 +10,17 @@ var SchemaTreeMapper = require('./SchemaTreeMapper')
 function SagaSearch (schema, options) {
 
 	var esClient = new elasticSearch.Client({
-			host: options.host
+			host: options.host,
+			log: 'trace'
 		})
 	  , schemaExtension = options.schemaExtension
 	  , hydrateOptions = options.hydrateOptions
 	  , alwaysHydrate = !!options.alwaysHydrate
-	  , mapping = SchemaTreeMapper(schema.tree)
+	  //, mapping = SchemaTreeMapper(schema.tree)
 	  , indexName = options.index
-	  , typeName = options.type;
+	  , typeName = options.type
+	  , settings = options.settings
+	  , mappings = options.mappings;
 
 
 	function resolveCollectionName (modelname) {
@@ -29,8 +33,65 @@ function SagaSearch (schema, options) {
 		//emitter.emit.apply(emitter, [eventName].concat(argsList));
 	}
 
-	schema.methods.addMapping = function (addedMapping) {
-		return MappingMerger(mapping, addedMapping);
+	function addMapping (callback) {
+		if(mappings) {
+			console.log("Mapping")
+			console.log(mappings)
+			esClient.indices.putMapping({
+				index: indexName,
+				type: typeName,
+				body: mappings
+			}, callback);
+		}
+		else {
+			callback(null);
+		}
+		//return MappingMerger(mapping, addedMapping);
+	};
+
+	function addSettings (callback){
+		if(settings) {
+			async.series([
+				function (callback){
+					//Index close
+					esClient.indices.close({
+						index:indexName
+					}, callback);
+				},
+				function (callback){
+				esClient.indices.putSettings({
+					index: indexName,
+					body: settings
+					}, callback);	
+				},
+				function (callback){
+					esClient.indices.open({
+						index:indexName
+					}, callback);
+				}], callback);
+		}
+		else {
+			callback(null);
+		}
+	};
+
+	function checkIndexOrCreate (callback){
+		esClient.indices.exists({
+			index: indexName
+		}, function(err, res){
+			if(!err && res == false){
+				createIndex(callback);
+			}
+			else {
+				callback(null);	
+			}
+		});
+	};
+
+	function createIndex(callback){
+		esClient.indices.create({
+			index:indexName
+		}, callback);
 	};
 
 	schema.methods.index = function (index, type) {
@@ -94,22 +155,43 @@ function SagaSearch (schema, options) {
 			  	});
 		  }
 
-		model.find(query).stream()
-		.on('data', function (doc) {
-			counter++;
-			if(doc.esWillIndex){
-				doc.esWillIndex();
-			}
-			forward(doc, counter);
-			doc.index();
-		})
-		.on('error', function (error) {
-			emitEvent(emitter, 'error', arguments);
-		})
-		.on('close', function () {
-			readyToClose = true;
-			close(arguments);
-		});
+		async.series([
+			function (callback){
+				console.log("CheckOrCreateIndex");
+				checkIndexOrCreate(callback);
+			},
+			function (callback){
+				console.log("Add settings")
+				addSettings(callback);
+			},
+			function (callback){
+				console.log("Add Mapping");
+				addMapping(callback);
+			},
+			function (callback){
+				model.find(query).stream()
+					.on('data', function (doc) {
+						counter++;
+						if(doc.esWillIndex){
+							doc.esWillIndex();
+						}
+						forward(doc, counter);
+						doc.index();
+					})
+					.on('error', function (error) {
+						emitEvent(emitter, 'error', arguments);
+					})
+					.on('close', function () {
+						readyToClose = true;
+						callback(null);
+						close(arguments);
+					});
+			}], function(err, res){
+				console.log("Async finished");
+				console.log(err);
+			});
+		//Add data
+
 
 		return emitter;
 	};
