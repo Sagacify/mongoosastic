@@ -11,7 +11,7 @@ function SagaSearch (schema, options) {
 
 	var esClient = new elasticSearch.Client({
 			host: options.host,
-			log: 'trace'
+			//log: 'trace'
 		})
 	  , schemaExtension = options.schemaExtension
 	  , hydrateOptions = options.hydrateOptions
@@ -94,6 +94,12 @@ function SagaSearch (schema, options) {
 		}, callback);
 	};
 
+	function deleteIndex (callback){
+		esClient.indices.delete({
+			index:indexName
+		}, callback);
+	};
+
 	schema.methods.index = function (index, type) {
 		var model = this;
 		esClient.index({
@@ -157,18 +163,23 @@ function SagaSearch (schema, options) {
 
 		async.series([
 			function (callback){
-				console.log("CheckOrCreateIndex");
+				console.log("Delete old index");
+				deleteIndex(callback);
+			},
+			function (callback){
+				console.log("CheckOrCreateIndex "+indexName);
 				checkIndexOrCreate(callback);
 			},
 			function (callback){
-				console.log("Add settings")
+				console.log("Add settings "+indexName);
 				addSettings(callback);
 			},
 			function (callback){
-				console.log("Add Mapping");
+				console.log("Add Mapping "+indexName);
 				addMapping(callback);
 			},
 			function (callback){
+				console.log("Sync "+indexName);
 				model.find(query).stream()
 					.on('data', function (doc) {
 						counter++;
@@ -179,6 +190,8 @@ function SagaSearch (schema, options) {
 						doc.index();
 					})
 					.on('error', function (error) {
+						console.log("error")
+						console.log(error)
 						emitEvent(emitter, 'error', arguments);
 					})
 					.on('close', function () {
