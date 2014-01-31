@@ -35,8 +35,6 @@ function SagaSearch (schema, options) {
 
 	schema.methods.index = function (index, type) {
 		var model = this;
-		console.log("--> NEW MODEL INDEXING");
-		console.log(model);
 		esClient.index({
 			index: index || indexName,
 			type: type || typeName || model.get('__t'),
@@ -77,11 +75,6 @@ function SagaSearch (schema, options) {
 		  }
 		  , forward = function (doc, counter) {
 			  	doc.on('es-indexed', function (error, res) {
-			  		// QUESTION FOR MICKAEL : I don't understand why the argument of this listener are different that the ones of the emmiter?? Also, I dont
-			  		// understand what the next emmiter does.  Thanks
-			  		// console.log("INDEXED ?");
-			  		// console.log("ERROR :"+ error)
-			  		// console.log("RES:" +res);
 			  		if(error) {
 						emitter.emit('error', error);
 					}
