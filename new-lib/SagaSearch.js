@@ -234,7 +234,7 @@ function SagaSearch (schema, options) {
 		if(doc.esWillIndex){
 			doc.esWillIndex();
 		}
-		doc.index();
+		doc.index && doc.index();
 	});
 
 }
