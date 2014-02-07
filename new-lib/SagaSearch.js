@@ -33,20 +33,41 @@ function SagaSearch (schema, options) {
 		//emitter.emit.apply(emitter, [eventName].concat(argsList));
 	}
 
+	/**
+	* add mapping to a document type. 
+	* either take a mapping object or loop over an array of mappings if "mapping" is an Array.
+	*/
 	function addMapping (callback) {
+
 		if(mappings) {
-			console.log("Mapping")
+			console.log("Mappings")
 			console.log(mappings)
-			esClient.indices.putMapping({
-				index: indexName,
-				type: typeName,
-				body: mappings
-			}, callback);
+			if (typeof mappings != 'string' && mappings.length && mappings.length) {
+				async.each(mappings, function(item, callback){
+					var map = {
+						index: indexName,
+						body: item,
+						type: item.keys()[0]
+					};
+					console.log("Put Mapping")
+					console.log(map)
+					esClient.indices.putMapping(map, callback);
+				}, function(err){
+					callback(err);
+				});
+			}
+			else {
+				var map = {
+					index: indexName,
+					body: mappings,
+					type: typeName || mappings.keys()[0]
+				};
+				esClient.indices.putMapping(map, callback);
+			}
 		}
 		else {
 			callback(null);
 		}
-		//return MappingMerger(mapping, addedMapping);
 	};
 
 	function addSettings (callback){
@@ -112,7 +133,7 @@ function SagaSearch (schema, options) {
 			//emitEvent(model, 'es-indexed', arguments);
 		});
 	};
-
+	
 	schema.methods.unindex = function (index, type) {
 		var model = this;
 		esClient.delete({
@@ -142,11 +163,6 @@ function SagaSearch (schema, options) {
 		  }
 		  , forward = function (doc, counter) {
 			  	doc.on('es-indexed', function (error, res) {
-			  		// QUESTION FOR MICKAEL : I don't understand why the argument of this listener are different that the ones of the emmiter?? Also, I dont
-			  		// understand what the next emmiter does.  Thanks
-			  		// console.log("INDEXED ?");
-			  		// console.log("ERROR :"+ error)
-			  		// console.log("RES:" +res);
 			  		if(error) {
 						emitter.emit('error', error);
 					}
