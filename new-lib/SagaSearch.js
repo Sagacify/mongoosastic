@@ -126,8 +126,8 @@ function SagaSearch (schema, options) {
 		esClient.index({
 			index: index || indexName,
 			type: type || typeName || model.get('__t'),
-			id: '' + model._id,
-			body: /*Serializer(mapping, model)*/model
+			id: '' + model.get('_id'),
+			body: model
 		}, function (error, res) {
 			model.emit('es-indexed', error, res);
 			//emitEvent(model, 'es-indexed', arguments);
