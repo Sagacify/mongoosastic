@@ -15,7 +15,6 @@ exports.hydrator = function (res, model, hydrateOptions) {
 }
 
 exports.hydrateDocument = function(hit, modelName, hydrateOptions) {
-	console.log(modelName);
 	var models = mongoose.models
 	  , data = hit._source
 	  , model;
