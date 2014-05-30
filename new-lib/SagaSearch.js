@@ -38,10 +38,9 @@ function SagaSearch (schema, options) {
 	* either take a mapping object or loop over an array of mappings if "mapping" is an Array.
 	*/
 	function addMapping (callback) {
-
 		if(mappings) {
-			console.log("Mappings")
-			console.log(mappings)
+			// console.log("Mappings")
+			// console.log(mappings)
 			if (typeof mappings != 'string' && mappings.length && mappings.length) {
 				async.each(mappings, function(item, callback){
 					var map = {
@@ -50,13 +49,12 @@ function SagaSearch (schema, options) {
 						type: item.keys()[0]
 					};
 					console.log("Put Mapping")
-					console.log(map)
+					console.log(JSON.stringify(map));
 					esClient.indices.putMapping(map, callback);
 				}, function(err){
 					callback(err);
 				});
-			}
-			else {
+			} else {
 				var map = {
 					index: indexName,
 					body: mappings,

@@ -26,8 +26,6 @@ exports.hydrateDocument = function(hit, modelName, hydrateOptions) {
 		return new model(data);
 	}
 	else if((model = models[modelName])) {
-		console.log("hydrate ");
-
 		return new model(data);
 	}
 	else {
