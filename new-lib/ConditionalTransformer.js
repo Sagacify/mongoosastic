@@ -1,11 +1,11 @@
-var ejs = require("./../../search/elastic");
-var is = require("./../../strict_typing/validateType");
+var ejs = require("elastic.js");
+var is = require("../lib/strict_typing/validateType");
 
- exports.FromMongooseQueryToEjs= function(mongooseQuery){
- 	console.log('Processing query');
+exports.FromMongooseQueryToEjs = function (mongooseQuery) {
+	console.log('Processing query');
 
 	var result = [];
-	for(key in mongooseQuery){
+	for (key in mongooseQuery) {
 		result.push(TransformKeyValue(key, mongooseQuery[key]));
 	}
 	if (result.length == 1) {
@@ -14,8 +14,8 @@ var is = require("./../../strict_typing/validateType");
 	return ejs.AndFilter(result)
 }
 
-TransformKeyValue= function(key, value){
-	console.log('Processing Key '+ key);
+TransformKeyValue = function (key, value) {
+	console.log('Processing Key ' + key);
 	console.log(value);
 	console.log("--------------------");
 
@@ -29,7 +29,7 @@ TransformKeyValue= function(key, value){
 		};
 		return ejs.OrFilter(content);
 	};
-	
+
 	if (key == "$and") {
 		var content = [];
 		for (var i = 0; i < value.length; i++) {
@@ -58,6 +58,6 @@ TransformKeyValue= function(key, value){
 			return ejs.NotFilter(ejs.TermFilter(key, value['$ne']));
 		};
 	};
-	console.log("PUT SIMPLE TERM "+ value);
+	console.log("PUT SIMPLE TERM " + value);
 	return ejs.TermFilter(key, value);
 }
