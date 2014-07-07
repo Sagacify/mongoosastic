@@ -13,7 +13,7 @@
       "type":"git",
       "url":"git@github.com:Sagacify/mongoosastic.git"
    },
-   "main":"new-lib",
+   "main":"new-lib/",
    "dependencies":{
       "elastical": "latest",
       "elasticsearch":"latest"
