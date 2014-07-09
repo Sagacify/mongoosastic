@@ -1,4 +1,4 @@
-var ejs = require("elastic.js");
+var ejs = require("../lib/search/elastic");
 var is = require('../lib/strict_typing/validateType');
 
 exports.FromMongooseQueryToEjs = function (mongooseQuery) {
