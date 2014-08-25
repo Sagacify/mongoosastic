@@ -116,7 +116,7 @@ function SagaSearch (schema, options) {
 	function deleteIndex (callback){
 		esClient.indices.delete({
 			index:indexName
-		}, null);
+		}, callback(null));
 	};
 
 	schema.methods.index = function (index, type) {
