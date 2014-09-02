@@ -203,22 +203,23 @@ function SagaSearch (schema, options) {
 				console.log("Sync "+indexName);
 				model.find(query).stream()
 					.on('data', function (doc) {
-						counter++;
-						if(doc.esWillIndex){
-							doc.esWillIndex();
-						}
-						forward(doc, counter);
+						// counter++;
+						// if(doc.esWillIndex){
+						// 	doc.esWillIndex();
+						// }
+						// forward(doc, counter);
 						doc.index();
 					})
 					.on('error', function (error) {
 						console.log("error")
 						console.log(error)
-						emitEvent(emitter, 'error', arguments);
+						// emitEvent(emitter, 'error', arguments);
+						callback(error);
 					})
 					.on('close', function () {
-						readyToClose = true;
+						// readyToClose = true;
 						callback(null);
-						close(arguments);
+						// close(arguments);
 					});
 			}], function(err, res){
 				if (!err){
