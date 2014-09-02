@@ -101,9 +101,7 @@ function SagaSearch (schema, options) {
 			if(!err && res == false){
 				createIndex(callback);
 			}
-			else {
-				callback(null);	
-			}
+			callback(err);
 		});
 	};
 
@@ -114,9 +112,18 @@ function SagaSearch (schema, options) {
 	};
 
 	function deleteIndex (callback){
-		esClient.indices.delete({
+		esClient.indices.exists({
 			index:indexName
-		}, callback);
+		}, function(err, res){
+			if(!err && res == true){
+				esClient.indices.delete({
+					index:indexName
+				}, callback);		
+			}
+			else {
+				callback(null);
+			}
+		});
 	};
 
 	schema.methods.index = function (index, type) {
@@ -144,7 +151,7 @@ function SagaSearch (schema, options) {
 		});
 	};
 
-	schema.statics.sync = function (query) {
+	schema.statics.sync = function (query, callback) {
 		var model   = this
 		  , readyToClose = false
 		  , emitter = new events.EventEmitter();
@@ -177,7 +184,7 @@ function SagaSearch (schema, options) {
 
 		async.series([
 			function (callback){
-				console.log("Delete old index");
+				console.log("Delete old index "+indexName);
 				deleteIndex(callback);
 			},
 			function (callback){
@@ -214,12 +221,15 @@ function SagaSearch (schema, options) {
 						close(arguments);
 					});
 			}], function(err, res){
-				console.log("Async finished");
-				console.log(err);
+				if (!err){
+					console.log("Async finished : " + indexName);
+					callback(null);	
+				}
+				else {
+					console.log(err);	
+					callback(err);
+				}
 			});
-		//Add data
-
-
 		return emitter;
 	};
 
