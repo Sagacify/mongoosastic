@@ -1,48 +1,48 @@
-var elasticSearch = require('elasticsearch')
-  , events        = require('events')
-  , async		  = require('async');
+var elasticSearch = require('elasticsearch'),
+	events = require('events'),
+	async = require('async');
 
-var SchemaTreeMapper = require('./SchemaTreeMapper')
-  , MappingMerger = require('./MappingMerger')
-  , Serializer = require('./Serializer')
-  , Hydrator = require('./Hydrator');
+var SchemaTreeMapper = require('./SchemaTreeMapper'),
+	MappingMerger = require('./MappingMerger'),
+	Serializer = require('./Serializer'),
+	Hydrator = require('./Hydrator');
 
-function SagaSearch (schema, options) {
+function SagaSearch(schema, options) {
 
 	var esClient = new elasticSearch.Client({
-			host: options.host,
-			//log: 'trace'
-		})
-	  , schemaExtension = options.schemaExtension
-	  , hydrateOptions = options.hydrateOptions
-	  , alwaysHydrate = !!options.alwaysHydrate
-	  //, mapping = SchemaTreeMapper(schema.tree)
-	  , indexName = options.index
-	  , typeName = options.type
-	  , settings = options.settings
-	  , mappings = options.mappings;
+		host: options.host,
+		//log: 'trace'
+	}),
+		schemaExtension = options.schemaExtension,
+		hydrateOptions = options.hydrateOptions,
+		alwaysHydrate = !! options.alwaysHydrate
+		//, mapping = SchemaTreeMapper(schema.tree)
+		,
+		indexName = options.index,
+		typeName = options.type,
+		settings = options.settings,
+		mappings = options.mappings;
 
-
-	function resolveCollectionName (modelname) {
+	function resolveCollectionName(modelname) {
 		return mongoose.models[modelname] ? mongoose.models[modelname].collection.name : null;
 	}
 
-	function emitEvent (emitter, eventName, args) {
+	function emitEvent(emitter, eventName, args) {
 		//var argsList = Array.prototype.slice.call(arguments, 0);
 		emitter.emit(eventName, args);
 		//emitter.emit.apply(emitter, [eventName].concat(argsList));
 	}
 
 	/**
-	* add mapping to a document type. 
-	* either take a mapping object or loop over an array of mappings if "mapping" is an Array.
-	*/
-	function addMapping (callback) {
-		if(mappings) {
+	 * add mapping to a document type.
+	 * either take a mapping object or loop over an array of mappings if "mapping" is an Array.
+	 */
+	function addMapping(callback) {
+		if (mappings) {
 			// console.log("Mappings")
 			// console.log(mappings)
 			if (typeof mappings != 'string' && mappings.length && mappings.length) {
-				async.each(mappings, function(item, callback){
+				async.each(mappings, function (item, callback) {
 					var map = {
 						index: indexName,
 						body: item,
@@ -51,7 +51,7 @@ function SagaSearch (schema, options) {
 					console.log("Put Mapping")
 					console.log(JSON.stringify(map));
 					esClient.indices.putMapping(map, callback);
-				}, function(err){
+				}, function (err) {
 					callback(err);
 				});
 			} else {
@@ -62,61 +62,67 @@ function SagaSearch (schema, options) {
 				};
 				esClient.indices.putMapping(map, callback);
 			}
-		}
-		else {
+		} else {
 			callback(null);
 		}
 	};
 
-	function addSettings (callback){
-		if(settings) {
+	function addSettings(callback) {
+		if (settings) {
 			async.series([
-				function (callback){
+
+				function (callback) {
 					//Index close
 					esClient.indices.close({
-						index:indexName
+						index: indexName
 					}, callback);
 				},
-				function (callback){
-				esClient.indices.putSettings({
-					index: indexName,
-					body: settings
-					}, callback);	
+				function (callback) {
+					esClient.indices.putSettings({
+						index: indexName,
+						body: settings
+					}, callback);
 				},
-				function (callback){
+				function (callback) {
 					esClient.indices.open({
-						index:indexName
+						index: indexName
 					}, callback);
-				}], callback);
-		}
-		else {
+				}
+			], callback);
+		} else {
 			callback(null);
 		}
 	};
 
-	function checkIndexOrCreate (callback){
+	function checkIndexOrCreate(callback) {
 		esClient.indices.exists({
 			index: indexName
-		}, function(err, res){
-			if(!err && res == false){
+		}, function (err, res) {
+			if (!err && res == false) {
 				createIndex(callback);
 			}
-			else {
-				callback(null);	
-			}
+			callback(err);
 		});
 	};
 
-	function createIndex(callback){
+	function createIndex(callback) {
 		esClient.indices.create({
-			index:indexName
+			index: indexName
 		}, callback);
 	};
 
-	function deleteIndex (callback){
-		esClient.indices.delete({
-			index:indexName
-		}, callback(null));
+	function deleteIndex(callback) {
+		esClient.indices.exists({
+			index: indexName
+		}, function (err, res) {
+			if (!err && res == true) {
+				esClient.indices.delete({
+					index: indexName
+				}, callback);
+			} else {
+				callback(null);
+			}
+		});
 	};
 
 	schema.methods.index = function (index, type) {
@@ -131,7 +137,7 @@ function SagaSearch (schema, options) {
 			//emitEvent(model, 'es-indexed', arguments);
 		});
 	};
-	
+
 	schema.methods.unindex = function (index, type) {
 		var model = this;
 		esClient.delete({
@@ -144,82 +150,85 @@ function SagaSearch (schema, options) {
 		});
 	};
 
-	schema.statics.sync = function (query) {
-		var model   = this
-		  , readyToClose = false
-		  , emitter = new events.EventEmitter();
+	schema.statics.sync = function (query, callback) {
+		var model = this,
+			readyToClose = false,
+			emitter = new events.EventEmitter();
 
-		if(!query || (typeof query !== 'object')) {
+		if (!query || (typeof query !== 'object')) {
 			query = {};
 		}
 
-		var counter = 0
-		  , close = function (args) {
-		  		if(!counter && readyToClose) {
-		  			emitEvent(emitter, 'close', args);
-		  		}
-		  }
-		  , forward = function (doc, counter) {
-			  	doc.on('es-indexed', function (error, res) {
-			  		if(error) {
+		var counter = 0,
+			close = function (args) {
+				if (!counter && readyToClose) {
+					emitEvent(emitter, 'close', args);
+				}
+			}, forward = function (doc, counter) {
+				doc.on('es-indexed', function (error, res) {
+					if (error) {
 						emitter.emit('error', error);
-					}
-					else {
+					} else {
 						emitter.emit('data', null, doc);
 					}
-			  		//emitEvent(emitter, error ? 'error' : 'data', arguments);
-			  		if(counter != null) {
-			  			counter--;
-			  			close();
-			  		}
-			  	});
-		  }
+					//emitEvent(emitter, error ? 'error' : 'data', arguments);
+					if (counter != null) {
+						counter--;
+						close();
+					}
+				});
+			}
 
 		async.series([
-			function (callback){
-				console.log("Delete old index");
+
+			function (callback) {
+				console.log("Delete old index " + indexName);
 				deleteIndex(callback);
 			},
-			function (callback){
-				console.log("CheckOrCreateIndex "+indexName);
+			function (callback) {
+				console.log("CheckOrCreateIndex " + indexName);
 				checkIndexOrCreate(callback);
 			},
-			function (callback){
-				console.log("Add settings "+indexName);
+			function (callback) {
+				console.log("Add settings " + indexName);
 				addSettings(callback);
 			},
-			function (callback){
-				console.log("Add Mapping "+indexName);
+			function (callback) {
+				console.log("Add Mapping " + indexName);
 				addMapping(callback);
 			},
-			function (callback){
-				console.log("Sync "+indexName);
+			function (callback) {
+				console.log("Sync " + indexName);
 				model.find(query).stream()
 					.on('data', function (doc) {
-						counter++;
-						if(doc.esWillIndex){
-							doc.esWillIndex();
-						}
-						forward(doc, counter);
+						// counter++;
+						// if(doc.esWillIndex){
+						// 	doc.esWillIndex();
+						// }
+						// forward(doc, counter);
 						doc.index();
 					})
 					.on('error', function (error) {
 						console.log("error")
 						console.log(error)
-						emitEvent(emitter, 'error', arguments);
+						// emitEvent(emitter, 'error', arguments);
+						callback(error);
 					})
 					.on('close', function () {
-						readyToClose = true;
+						// readyToClose = true;
 						callback(null);
-						close(arguments);
+						// close(arguments);
 					});
-			}], function(err, res){
-				console.log("Async finished");
+			}
+		], function (err, res) {
+			if (!err) {
+				console.log("Async finished : " + indexName);
+				callback(null);
+			} else {
 				console.log(err);
-			});
-		//Add data
-
-
+				callback(err);
+			}
+		});
 		return emitter;
 	};
 
@@ -228,13 +237,11 @@ function SagaSearch (schema, options) {
 		query.index = index || indexName;
 		query.type = type || typeName;
 		esClient.search(query, function (error, res) {
-			if(error) {
+			if (error) {
 				cb(error);
-			}
-			else if(alwaysHydrate || options.hydrate) {
+			} else if (alwaysHydrate || options.hydrate) {
 				cb(null, Hydrator(res, hydrateOptions));
-			}
-			else {
+			} else {
 				cb(null, res);
 			}
 		});
@@ -245,7 +252,7 @@ function SagaSearch (schema, options) {
 	});
 
 	schema.post('save', function (doc) {
-		if(doc.esWillIndex){
+		if (doc.esWillIndex) {
 			doc.esWillIndex();
 		}
 		doc.index && doc.index();
