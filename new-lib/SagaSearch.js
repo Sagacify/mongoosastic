@@ -101,7 +101,9 @@ function SagaSearch(schema, options) {
 			if (!err && res == false) {
 				createIndex(callback);
 			}
-			callback(err);
+			else {
+				callback(err);	
+			}
 		});
 	};
 
@@ -190,8 +192,10 @@ function SagaSearch(schema, options) {
 				checkIndexOrCreate(callback);
 			},
 			function (callback) {
-				console.log("Add settings " + indexName);
-				addSettings(callback);
+				setTimeout(function(){
+					console.log("Add settings " + indexName);
+					addSettings(callback);	
+				}, 1000);
 			},
 			function (callback) {
 				console.log("Add Mapping " + indexName);
