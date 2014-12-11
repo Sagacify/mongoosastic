@@ -2,7 +2,7 @@ exports.hydrator = function (res, model, hydrateOptions) {
 	var modelName = model ? model.modelName : null
 	  , hits
 	  , len;
-	if(res.hits && (len = res.hits.length) && (hits = res.hits.hits)) {
+	if(res.hits && (len = res.hits.hits.length) && (hits = res.hits.hits)) {
 		var hit;
 		var model;
 		while(len--) {
@@ -12,6 +12,23 @@ exports.hydrator = function (res, model, hydrateOptions) {
 		}
 	}
 	return res;
+}
+
+exports.hydratorLean = function (res, model, hydrateOptions) {
+	var modelName = model ? model.modelName : null
+	  , hits
+	  , len;
+
+	var objectList = []
+	if(res.hits && (len = res.hits.hits.length) && (hits = res.hits.hits)) {
+		var hit;
+		var model;
+		while(len--) {
+			hit = hits[len];
+			objectList.push(exports.hydrateDocument(hit, modelName, hydrateOptions));
+		}
+	}
+	return objectList;
 }
 
 exports.hydrateDocument = function(hit, modelName, hydrateOptions) {
