@@ -145,12 +145,20 @@ function SagaSearch(schema, options) {
 		esClient.delete({
 			index: index || indexName,
 			type: type || typeName || model.get('__t'),
-			id: '' + model._id
+			id: '' + model.get('_id')
 		}, function (error, res) {
 			model.emit('es-removed', error, res);
 			//emitEvent(model, 'es-removed', arguments);
 		});
 	};
+
+	/*
+	This method has to be called on the server connection. This ensures that the corresponding
+	indexes has been created on the Elasticsearch server
+	*/
+	schema.statics.connect = function(callback) {
+		checkIndexOrCreate(callback);
+	}
 
 	schema.statics.sync = function (query, callback) {
 		var model = this,
@@ -259,7 +267,7 @@ function SagaSearch(schema, options) {
 		if (doc.esWillIndex) {
 			doc.esWillIndex();
 		}
-		doc.index && doc.index();
+		doc.index();
 	});
 
 }
