@@ -1,5 +1,5 @@
 module.exports = {
-	//ConditionalTransformer: require('./ConditionalTransformer'),
+	ConditionalTransformer: require('./ConditionalTransformer'),
 	Hydrator: require('./Hydrator'),
 	MappingMerger: require('./MappingMerger'),
 	SagaSearch: require('./SagaSearch'),
