@@ -1,5 +1,4 @@
 var ejs = require('elastic.js');
-var is = require('node-lib').validateType;
 
 exports.FromMongooseQueryToEjs = function (mongooseQuery) {
 	console.log('Processing query');
@@ -41,7 +40,7 @@ TransformKeyValue = function (key, value) {
 		return ejs.AndFilter(content);
 	};
 
-	if (is.Object(value)) {
+	if (Object.prototype.toString.call(value) === '[object Object]') {
 		if ('$in' in value) {
 			return ejs.TermsFilter(key, value['$in']);
 		};

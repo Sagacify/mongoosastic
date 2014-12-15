@@ -17,8 +17,7 @@
    "dependencies": {
       "elastical": "latest",
       "elasticsearch": "latest",
-      "elastic.js": "git+ssh://git@github.com:Sagacify/elastic.js.git",
-      "node-lib": "git+ssh://git@github.com:Sagacify/node-lib.git#worker"
+      "elastic.js": "git+ssh://git@github.com:Sagacify/elastic.js.git"
    },
    "peerDependencies": {
       "mongoose": "3.8.x"
