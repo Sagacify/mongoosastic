@@ -5,10 +5,9 @@ exports.hydrator = function (res, model, hydrateOptions) {
 	if(res.hits && (len = res.hits.hits.length) && (hits = res.hits.hits)) {
 		var hit;
 		var model;
-		while(len--) {
-			hit = hits[len];
-			hits[len]._source = exports.hydrateDocument(hit, modelName, hydrateOptions);
-
+		for (var i = 0; i < hits.length; i++) {
+			hit = hits[i];
+			hits[i]._source = exports.hydrateDocument(hit, modelName, hydrateOptions);
 		}
 	}
 	return res;
@@ -23,10 +22,10 @@ exports.hydratorLean = function (res, model, hydrateOptions) {
 	if(res.hits && (len = res.hits.hits.length) && (hits = res.hits.hits)) {
 		var hit;
 		var model;
-		while(len--) {
-			hit = hits[len];
+		for (var i = 0; i < hits.length; i++) {
+		 	hit = hits[i];
 			objectList.push(exports.hydrateDocument(hit, modelName, hydrateOptions));
-		}
+		};
 	}
 	return objectList;
 }
