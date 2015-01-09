@@ -1,0 +1,36 @@
+{
+	"boss": true,
+	"expr": true,
+	"curly": true,
+	"undef": true,
+	"noarg": true,
+	"immed": true,
+	"eqnull": true,
+	"strict": true,
+	"unused": true,
+	"freeze": true,
+	"eqeqeq": true,
+	"nonbsp": false,
+	"nonew": true,
+	"newcap": false,
+	"noempty": true,
+	"quotmark": "single",
+
+	"browser": false,
+	"node": true,
+
+	"globals": {
+		"module": false,
+
+		"console": false,
+
+		"beforeEach": false,
+		"requirejs": false,
+		"require": false,
+		"define": false,
+
+		"describe": false,
+		"before": false,
+		"it": false
+    }
+}
