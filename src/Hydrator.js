@@ -16,7 +16,7 @@ module.exports = (function () {
 		}
 
 		return res;
-	};
+	}
 
 	function hydratorLean (res, model, hydrateOptions) {
 		var modelName = model ? model.modelName : null
@@ -35,31 +35,44 @@ module.exports = (function () {
 		}
 
 		return objectList;
-	};
+	}
 
 	function hydrateDocument (hit, modelName, hydrateOptions) {
+		var data = hit._source
+
+		var model = getModel(hydrateOptions);
+
+		if (model === undefined) {
+			return data;
+		}
+		
+		return new model(data);
+	}
+
+	function getModel (hydrateOptions) {
 		var models = mongoose.models
-		  , data = hit._source
 		  , model;
 
-		if (hydrateOptions && (model = hydrateOptions[hit._type]) ) {
-			return new model(data);
+		if (hydrateOptions && hit._type in hydrateOptions) {
+			model = hydrateOptions[hit._type];
 		}
 		
-		if ((model = models[hit._type])) {
-			return new model(data);
+		if (hit._type in models) {
+			model = models[hit._type];
 		}
 		
-		if ((model = models[modelName])) {
-			return new model(data);
+		if (modelName in models) {
+			model = models[modelName];
 		}
 
-		return data;
-	};
+		return model;
+	}
 
 	return {
 		hydrateDocument: hydrateDocument,
 		hydratorLean: hydratorLean,
-		hydrator: hydrator
+		hydrator: hydrator,
+
+		getModel: getModel
 	};
 })();
