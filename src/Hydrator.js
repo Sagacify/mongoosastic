@@ -41,7 +41,7 @@ module.exports = (function () {
 		hydrateDocument: function (hit, modelName, hydrateOptions) {
 			var data = hit._source
 
-			var model = this.getModel(hydrateOptions);
+			var model = this.getModel(hydrateOptions, data);
 
 			if (model === undefined) {
 				return data;
@@ -50,7 +50,7 @@ module.exports = (function () {
 			return new model(data);
 		},
 
-		getModel: function (hydrateOptions) {
+		getModel: function (hydrateOptions, data) {
 			var models = mongoose.models
 			  , model;
 
