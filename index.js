@@ -1,8 +1,8 @@
-var ConditionalTransformer = require('./ConditionalTransformer');
-var MappingMerger = require('./MappingMerger');
-var Serializer = require('./Serializer');
-var SagaSearch = require('./SagaSearch');
-var Hydrator = require('./Hydrator');
+var ConditionalTransformer = require('./src/ConditionalTransformer');
+var MappingMerger = require('./src/MappingMerger');
+var Serializer = require('./src/Serializer');
+var SagaSearch = require('./src/SagaSearch');
+var Hydrator = require('./src/Hydrator');
 
 module.exports = (function () {
 	'use strict';
