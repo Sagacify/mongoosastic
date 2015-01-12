@@ -12,20 +12,16 @@ module.exports = (function () {
 	function SagaSearch (schema, options) {
 
 		var esClient = new elasticSearch.Client({
-			host: options.host,
+			host: options.host
 			//log: 'trace'
 		}),
 		schemaExtension = options.schemaExtension,
 		hydrateOptions = options.hydrateOptions,
-		alwaysHydrate = !! options.alwaysHydrate,
+		alwaysHydrate = !!options.alwaysHydrate,
 		indexName = options.index,
 		typeName = options.type,
 		settings = options.settings,
 		mappings = options.mappings;
-
-		function resolveCollectionName(modelname) {
-			return mongoose.models[modelname] ? mongoose.models[modelname].collection.name : null;
-		}
 
 		function emitEvent(emitter, eventName, args) {
 			emitter.emit(eventName, args);
@@ -36,31 +32,18 @@ module.exports = (function () {
 		 * either take a mapping object or loop over an array of mappings if "mapping" is an Array.
 		 */
 		function addMapping (callback) {
-			if (!mappings) {
-				return callback(null);
-			}
+			mappings = mappings || [];
+			mappings = Array.isArray(mappings) ? mappings : [mappings];
 
-			if (typeof mappings != 'string' && mappings.length && mappings.length) {
-				async.each(mappings, function (item, callback) {
-					var map = {
-						index: indexName,
-						body: item,
-						type: item.keys()[0]
-					};
-
-					esClient.indices.putMapping(map, callback);
-				}, function (err) {
-					callback(err);
-				});
-			}
-			else {
+			async.each(mappings, function (item, cb) {
 				var map = {
 					index: indexName,
-					body: mappings,
-					type: typeName || mappings.keys()[0]
+					body: item,
+					type: typeName || item.keys()[0]
 				};
-				esClient.indices.putMapping(map, callback);
-			}
+
+				esClient.indices.putMapping(map, cb);
+			}, callback);
 		};
 
 		function addSettings(callback) {
@@ -171,7 +154,8 @@ module.exports = (function () {
 					doc.on('es-indexed', function (error, res) {
 						if (error) {
 							emitter.emit('error', error);
-						} else {
+						}
+						else {
 							emitter.emit('data', null, doc);
 						}
 						//emitEvent(emitter, error ? 'error' : 'data', arguments);
@@ -198,24 +182,26 @@ module.exports = (function () {
 					addMapping(cb);
 				},
 				function (cb) {
-					model.find(query).stream()
-						.on('data', function (doc) {
-							// counter++;
-							// if(doc.esWillIndex){
-							// 	doc.esWillIndex();
-							// }
-							// forward(doc, counter);
-							doc.index();
-						})
-						.on('error', function (error) {
-							// emitEvent(emitter, 'error', arguments);
-							cb(error);
-						})
-						.on('close', function () {
-							// readyToClose = true;
-							cb(null);
-							// close(arguments);
-						});
+					model
+					.find(query)
+					.stream()
+					.on('data', function (doc) {
+						// counter++;
+						// if(doc.esWillIndex){
+						// 	doc.esWillIndex();
+						// }
+						// forward(doc, counter);
+						doc.index();
+					})
+					.on('error', function (error) {
+						// emitEvent(emitter, 'error', arguments);
+						cb(error);
+					})
+					.on('close', function () {
+						// readyToClose = true;
+						cb(null);
+						// close(arguments);
+					});
 				}
 			], callback);
 
@@ -256,5 +242,4 @@ module.exports = (function () {
 	}
 
 	return SagaSearch;
-
 })();
