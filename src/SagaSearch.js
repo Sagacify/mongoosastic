@@ -98,11 +98,11 @@ module.exports = (function () {
 			});
 		}
 
-		this.esGetIndexName = function (index) {
+		schema.methods.esGetIndexName = function (index) {
 			return index || indexName;
 		};
 
-		this.esGetTypeName = function (type, model) {
+		schema.methods.esGetTypeName = function (type, model) {
 			return type || typeName || model.get('__t');
 		};
 
