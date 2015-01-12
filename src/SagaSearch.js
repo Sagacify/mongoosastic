@@ -2,9 +2,7 @@ var elasticSearch = require('elasticsearch'),
 	events = require('events'),
 	async = require('async');
 
-var MappingMerger = require('./MappingMerger'),
-	Serializer = require('./Serializer'),
-	Hydrator = require('./Hydrator');
+var Hydrator = require('./Hydrator');
 
 module.exports = (function () {
 	'use strict';
@@ -15,17 +13,12 @@ module.exports = (function () {
 			host: options.host
 			//log: 'trace'
 		}),
-		schemaExtension = options.schemaExtension,
 		hydrateOptions = options.hydrateOptions,
 		alwaysHydrate = !!options.alwaysHydrate,
 		indexName = options.index,
 		typeName = options.type,
 		settings = options.settings,
 		mappings = options.mappings;
-
-		function emitEvent(emitter, eventName, args) {
-			emitter.emit(eventName, args);
-		}
 
 		/**
 		 * Add mapping to a document type.
@@ -38,13 +31,13 @@ module.exports = (function () {
 			async.each(mappings, function (item, cb) {
 				var map = {
 					index: indexName,
-					body: item,
-					type: typeName || item.keys()[0]
+					type: typeName || item.keys()[0],
+					body: item
 				};
 
 				esClient.indices.putMapping(map, cb);
 			}, callback);
-		};
+		}
 
 		function addSettings(callback) {
 			if (!settings) {
@@ -67,12 +60,12 @@ module.exports = (function () {
 				function (cb) {
 					esClient.indices.open({
 						index: indexName
-					}, cb);
+						}, cb);
 				}
 			], callback);
-		};
+		}
 
-		function checkIndexOrCreate(callback) {
+		function checkIndexOrCreate (callback) {
 			esClient.indices.exists({
 				index: indexName
 			}, function (err, res) {
@@ -83,15 +76,15 @@ module.exports = (function () {
 					callback(err);	
 				}
 			});
-		};
+		}
 
-		function createIndex(callback) {
+		function createIndex (callback) {
 			esClient.indices.create({
 				index: indexName
 			}, callback);
-		};
+		}
 
-		function deleteIndex(callback) {
+		function deleteIndex (callback) {
 			esClient.indices.exists({
 				index: indexName
 			}, function (err, res) {
@@ -103,14 +96,22 @@ module.exports = (function () {
 					callback(null);
 				}
 			});
+		}
+
+		this.esGetIndexName = function (index) {
+			return index || indexName;
+		};
+
+		this.esGetTypeName = function (type, model) {
+			return type || typeName || model.get('__t');
 		};
 
 		schema.methods.index = function (index, type) {
 			var model = this;
 			esClient.index({
-				index: index || indexName,
-				type: type || typeName || model.get('__t'),
-				id: '' + model.get('_id'),
+				index: this.esGetIndexName(index),
+				type: this.esGetTypeName(type, model),
+				id: model.get('_id').toString(),
 				body: model
 			}, function (error, res) {
 				model.emit('es-indexed', error, res);
@@ -120,9 +121,9 @@ module.exports = (function () {
 		schema.methods.unindex = function (index, type) {
 			var model = this;
 			esClient.delete({
-				index: index || indexName,
-				type: type || typeName || model.get('__t'),
-				id: '' + model.get('_id')
+				index: this.esGetIndexName(index),
+				type: this.esGetTypeName(type, model),
+				id: model.get('_id').toString()
 			}, function (error, res) {
 				model.emit('es-removed', error, res);
 			});
@@ -134,37 +135,15 @@ module.exports = (function () {
 		*/
 		schema.statics.connect = function(callback) {
 			checkIndexOrCreate(callback);
-		}
+		};
 
 		schema.statics.sync = function (query, callback) {
 			var model = this,
-				readyToClose = false,
 				emitter = new events.EventEmitter();
 
 			if (!query || (typeof query !== 'object')) {
 				query = {};
 			}
-
-			var counter = 0,
-				close = function (args) {
-					if (!counter && readyToClose) {
-						emitEvent(emitter, 'close', args);
-					}
-				}, forward = function (doc, counter) {
-					doc.on('es-indexed', function (error, res) {
-						if (error) {
-							emitter.emit('error', error);
-						}
-						else {
-							emitter.emit('data', null, doc);
-						}
-						//emitEvent(emitter, error ? 'error' : 'data', arguments);
-						if (counter != null) {
-							counter--;
-							close();
-						}
-					});
-				};
 
 			async.series([
 				function (cb) {
@@ -186,21 +165,16 @@ module.exports = (function () {
 					.find(query)
 					.stream()
 					.on('data', function (doc) {
-						// counter++;
 						// if(doc.esWillIndex){
 						// 	doc.esWillIndex();
 						// }
-						// forward(doc, counter);
 						doc.index();
 					})
 					.on('error', function (error) {
-						// emitEvent(emitter, 'error', arguments);
 						cb(error);
 					})
 					.on('close', function () {
-						// readyToClose = true;
 						cb(null);
-						// close(arguments);
 					});
 				}
 			], callback);
@@ -208,9 +182,7 @@ module.exports = (function () {
 			return emitter;
 		};
 
-		schema.statics.search = function (query, index, type, options, cb) {
-			var model = this;
-		
+		schema.statics.search = function (query, index, type, options, cb) {		
 			query.index = index || indexName;
 			query.type = type || typeName;
 		
@@ -225,7 +197,7 @@ module.exports = (function () {
 
 				cb(null, res);
 			});
-		}
+		};
 
 		schema.post('remove', function (doc) {
 			doc.unindex();

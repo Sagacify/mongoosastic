@@ -3,12 +3,11 @@ module.exports = (function () {
 
 	return {
 		hydrator: function (res, model, hydrateOptions) {
-			var modelName = model ? model.modelName : null
-			  , hits;
+			var modelName = model ? model.modelName : null,
+				hits;
 
 			if(res.hits && res.hits.hits && res.hits.hits.length && (hits = res.hits.hits)) {
 				var hit;
-				var model;
 
 				for (var i = 0; i < hits.length; i++) {
 					hit = hits[i];
@@ -20,14 +19,13 @@ module.exports = (function () {
 		},
 
 		hydratorLean: function (res, model, hydrateOptions) {
-			var modelName = model ? model.modelName : null
-			  , hits;
+			var modelName = model ? model.modelName : null,
+				hits;
 
-			var objectList = []
+			var objectList = [];
 
 			if (res.hits && res.hits.hits && res.hits.hits.length && (hits = res.hits.hits)) {
 				var hit;
-				var model;
 
 				for (var i = 0; i < hits.length; i++) {
 				 	hit = hits[i];
@@ -51,9 +49,8 @@ module.exports = (function () {
 		},
 
 		getModel: function (hydrateOptions, modelName, hit) {
-			var models = mongoose.models
-			  , data = hit._source
-			  , model;
+			var models = global.mongoose.models,
+				model;
 
 			if (hydrateOptions && hit._type in hydrateOptions) {
 				model = hydrateOptions[hit._type];
