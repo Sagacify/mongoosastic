@@ -103,7 +103,7 @@ module.exports = (function () {
 		};
 
 		schema.methods.esGetTypeName = function (type, model) {
-			return type || model.get('__t') || typeName;
+			return type || model.modelName || model.get('__t') || typeName;
 		};
 
 		schema.methods.index = function (index, type) {
