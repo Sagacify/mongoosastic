@@ -58,7 +58,7 @@ function SagaSearch(schema, options) {
 				var map = {
 					index: indexName,
 					body: mappings,
-					type: typeName || mappings.keys()[0]
+					type: typeName || Object.keys(mappings)[0]
 				};
 				esClient.indices.putMapping(map, callback);
 			}
