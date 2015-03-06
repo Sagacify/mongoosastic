@@ -46,7 +46,7 @@ function SagaSearch(schema, options) {
 					var map = {
 						index: indexName,
 						body: item,
-						type: item.keys()[0]
+						type: Object.keys(item)[0]
 					};
 					console.log("Put Mapping")
 					console.log(JSON.stringify(map));
