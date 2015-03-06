@@ -127,27 +127,25 @@ function SagaSearch(schema, options) {
 		});
 	};
 
-	schema.methods.index = function (index, type) {
+	schema.methods.index = function (options, callback) {
 		var model = this;
+		var options = options || {};
+
 		esClient.index({
-			index: index || indexName,
-			type: type || typeName || model.get('__t'),
+			index: option.index || indexName,
+			type: option.type || typeName || model.get('__t'),
 			id: '' + model.get('_id'),
 			body: model
-		}, function (error, res) {
-			if (error){
-				console.log(error);
-			}
-			model.emit('es-indexed', error, res);
-			//emitEvent(model, 'es-indexed', arguments);
-		});
+		}, callback);
 	};
 
-	schema.methods.unindex = function (index, type) {
+	schema.methods.unindex = function (options, index, type) {
 		var model = this;
+		var options = options || {};
+
 		esClient.delete({
-			index: index || indexName,
-			type: type || typeName || model.get('__t'),
+			index: options.index || indexName,
+			type: options.type || typeName || model.get('__t'),
 			id: '' + model.get('_id')
 		}, function (error, res) {
 			model.emit('es-removed', error, res);
@@ -214,14 +212,15 @@ function SagaSearch(schema, options) {
 			},
 			function (callback) {
 				console.log("Sync " + indexName);
+				var q = async.queue(function(docToSync, callback){
+					console.log('.');
+					docToSync.index({}, callback);
+				}, 10);
 				model.find(query).stream()
 					.on('data', function (doc) {
-						// counter++;
-						// if(doc.esWillIndex){
-						// 	doc.esWillIndex();
-						// }
-						// forward(doc, counter);
-						doc.index();
+						q.push(doc, function(){
+							console.log('ok');
+						});
 					})
 					.on('error', function (error) {
 						console.log("error")
@@ -260,17 +259,17 @@ function SagaSearch(schema, options) {
 				cb(null, res);
 			}
 		});
-	}
+	};
 
 	schema.post('remove', function (doc) {
-		doc.unindex();
+		doc.unindex({});
 	});
 
 	schema.post('save', function (doc) {
 		if (doc.esWillIndex) {
 			doc.esWillIndex();
 		}
-		doc.index();
+		doc.index({});
 	});
 
 }
