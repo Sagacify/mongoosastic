@@ -135,6 +135,9 @@ function SagaSearch(schema, options) {
 			id: '' + model.get('_id'),
 			body: model
 		}, function (error, res) {
+			if (error){
+				console.log(error);
+			}
 			model.emit('es-indexed', error, res);
 			//emitEvent(model, 'es-indexed', arguments);
 		});
