@@ -132,8 +132,8 @@ function SagaSearch(schema, options) {
 		var options = options || {};
 
 		esClient.index({
-			index: option.index || indexName,
-			type: option.type || typeName || model.get('__t'),
+			index: options.index || indexName,
+			type: options.type || typeName || model.get('__t'),
 			id: '' + model.get('_id'),
 			body: model
 		}, callback);
