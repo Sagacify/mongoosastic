@@ -212,27 +212,69 @@ function SagaSearch(schema, options) {
 			},
 			function (callback) {
 				console.log("Sync " + indexName);
-				var q = async.queue(function(docToSync, callback){
-					console.log('.');
-					docToSync.index({}, callback);
-				}, 10);
-				model.find(query).stream()
-					.on('data', function (doc) {
-						q.push(doc, function(){
-							console.log('ok');
+
+				var pageSize = 10;
+				var tasks = [];
+
+				tasks.push(function(callback){
+
+					model.find({}).limit(pageSize).exec(function(err, docToSync){
+						if (!err){
+							var lastId;
+							async.each(docToSync, function(item, callback){
+								//console.log("ID to sync : ", item._id);
+								item.index({}, callback);
+								lastId = item._id;
+							}, function(err){
+								//console.log("Last ID : ", lastId);
+								callback(err, lastId);
+
+							});
+						}
+						else {
+							callback(err, null);
+						}
+					});	
+				});
+
+				tasks.push(function(initlastId, callback){
+					//console.log("ENTER PAGINATION : ", initlastId);
+					var lastId = initlastId;
+
+					async.whilst(
+						function() {return lastId != null;},
+						function(callback){
+							model.find({'_id':{$gt: lastId}}).limit(pageSize).exec(function(err, docToSync){
+								if (!err && docToSync.length > 0){
+									async.each(docToSync, function(item, callback){
+										//console.log("ID to sync : ", item._id);
+										item.index({}, callback);
+										lastId = item._id;
+									}, function(err){
+										//console.log("Last ID : ", lastId);
+										callback(err, lastId);
+									});
+								}
+								else {
+									//console.log("Finish while loop : ", err);
+									lastId = null;
+									callback(err, null);
+								}
+							});
+						},
+						function(err){
+							//console.log("Finish sync : ", err);
+							callback(err);
 						});
-					})
-					.on('error', function (error) {
-						console.log("error")
-						console.log(error)
-						// emitEvent(emitter, 'error', arguments);
-						callback(error);
-					})
-					.on('close', function () {
-						// readyToClose = true;
-						callback(null);
-						// close(arguments);
-					});
+				});
+
+				async.waterfall(tasks, 
+					function(err, results){
+						//console.log("Waterfall DONE");
+						//console.log(results);
+						callback(err);
+				});
+
 			}
 		], function (err, res) {
 			if (!err) {
