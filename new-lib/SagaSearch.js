@@ -218,7 +218,7 @@ function SagaSearch(schema, options) {
 
 				tasks.push(function(callback){
 
-					model.find({}).limit(pageSize).exec(function(err, docToSync){
+					model.find({}).sort({_id : 1}).limit(pageSize).exec(function(err, docToSync){
 						if (!err){
 							var lastId;
 							async.each(docToSync, function(item, callback){
@@ -244,7 +244,7 @@ function SagaSearch(schema, options) {
 					async.whilst(
 						function() {return lastId != null;},
 						function(callback){
-							model.find({'_id':{$gt: lastId}}).limit(pageSize).exec(function(err, docToSync){
+							model.find({'_id':{$gt: lastId}}).sort({_id : 1}).limit(pageSize).exec(function(err, docToSync){
 								if (!err && docToSync.length > 0){
 									async.each(docToSync, function(item, callback){
 										//console.log("ID to sync : ", item._id);
