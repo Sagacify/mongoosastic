@@ -58,5 +58,5 @@ TransformKeyValue = function (key, value) {
 		};
 	};
 	console.log("PUT SIMPLE TERM " + value);
-	return ejs.TermFilter(key, value);
+	return ejs.TermFilter(key,(value.toLowerCase && value.toLowerCase()) || value );
 }
