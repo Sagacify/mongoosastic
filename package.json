@@ -15,8 +15,8 @@
    },
    "main": "new-lib/modules",
    "dependencies": {
-      "elastical": "latest",
-      "elasticsearch": "latest",
+      "elastical": "0.0.13",
+      "elasticsearch": "2.2.0",
       "elastic.js": "git+https://github.com/sagacify/elastic.js.git"
    },
    "peerDependencies": {
